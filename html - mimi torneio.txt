@@ -1,0 +1,327 @@
+<div style="display: flex; justify-content: center; width: 100%;">
+
+  <div id="blog-torneio-container">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+      /* --- ESTILOS VISUAIS --- */
+      #blog-torneio-container {
+        font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 20px;
+        background-color: #ffffff;
+        color: #333;
+        box-sizing: border-box;
+      }
+      
+      #blog-torneio-container h3 {
+        text-align: center;
+        color: #004aad;
+        margin-top: 0;
+        border-bottom: 3px solid #f1c40f;
+        padding-bottom: 15px;
+        text-transform: uppercase;
+      }
+      
+      .bt-input-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px; }
+      .bt-input-group input, .bt-input-group select { padding: 8px; border: 1px solid #aaa; border-radius: 4px; width: 45%; }
+      
+      .bt-btn { display: block; width: 100%; padding: 12px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; text-transform: uppercase; }
+      .bt-btn-verde { background-color: #27ae60; }
+      .bt-btn-azul { background-color: #2980b9; }
+      .bt-btn-roxo { background-color: #8e44ad; }
+      .bt-btn-vermelho { background-color: #c0392b; margin-top: 20px; }
+
+      .bt-rodada { background: #f9f9f9; margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 5px; }
+      .bt-rodada h4 { margin: 5px 0; text-align: center; font-size: 14px; color: #666; }
+      .bt-jogo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 13px; }
+      .bt-nome-time { width: 35%; text-align: center; font-weight: bold; }
+      .bt-placar-box { display: flex; align-items: center; gap: 5px; justify-content: center; width: 30%; }
+      .bt-placar-input { width: 40px; text-align: center; padding: 5px; font-weight: bold; border: 1px solid #777; }
+
+      .bt-print-text { font-weight: bold; font-size: 16px; color: #000; padding: 0 10px; display: inline-block; }
+
+      .bt-tabela-wrapper { overflow-x: auto; margin-top: 15px; }
+      table.bt-tabela { width: 100%; border-collapse: collapse; font-size: 12px; background: #fff; }
+      table.bt-tabela th, table.bt-tabela td { border: 1px solid #ccc; padding: 6px 4px; text-align: center; }
+      table.bt-tabela th { background-color: #004aad; color: white; }
+      
+      .bt-artilharia-box { margin-top: 25px; border-top: 2px dashed #ddd; padding-top: 15px; }
+      .bt-btn-small { padding: 4px 8px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 3px; }
+      .bt-add { background: #27ae60; } 
+      .bt-rem { background: #c0392b; }
+
+      .bt-oculto { display: none; }
+    </style>
+
+    <h3>🏆 Mini Torneio Ipu Sport Clube</h3>
+    
+    <div id="bt-setup">
+      <p style="text-align:center">Nomes das Equipes:</p>
+      <div class="bt-input-group">
+        <input type="text" id="bt-t1" placeholder="Time 1">
+        <input type="text" id="bt-t2" placeholder="Time 2">
+        <input type="text" id="bt-t3" placeholder="Time 3">
+        <input type="text" id="bt-t4" placeholder="Time 4">
+      </div>
+      <button class="bt-btn bt-btn-verde" onclick="btIniciarNovo()">Iniciar Campeonato</button>
+    </div>
+
+    <div id="bt-conteudo-pdf">
+        <div id="bt-jogos" class="bt-oculto">
+          <div id="bt-lista-rodadas"></div>
+          <button class="bt-btn bt-btn-azul bt-no-pdf" onclick="btAtualizar()">Atualizar Tabela</button>
+        </div>
+
+        <div id="bt-classificacao" class="bt-oculto">
+          <h4 style="text-align:center; margin-top:15px;">Classificação Geral</h4>
+          <div class="bt-tabela-wrapper">
+            <table class="bt-tabela">
+              <thead>
+                <tr><th>Time</th><th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>SG</th><th>%</th></tr>
+              </thead>
+              <tbody id="bt-corpo-tabela"></tbody>
+            </table>
+          </div>
+
+          <div class="bt-artilharia-box">
+            <h4 style="text-align:center;">⚽ Artilharia</h4>
+            <div class="bt-input-group bt-no-pdf" style="justify-content:flex-start;">
+               <select id="bt-select-time" style="width:30%"></select>
+               <input type="text" id="bt-nome-jogador" placeholder="Jogador" style="width:40%">
+               <input type="number" id="bt-gols-inicial" value="1" style="width:15%">
+               <button class="bt-btn-small bt-add" onclick="btAddArtilheiro()" style="width:10%">Ok</button>
+            </div>
+            <table class="bt-tabela">
+              <thead><tr><th>Jogador</th><th>Time</th><th>Gols</th><th class="bt-no-pdf">Ação</th></tr></thead>
+              <tbody id="bt-lista-artilheiros"></tbody>
+            </table>
+          </div>
+        </div>
+    </div>
+
+    <div id="bt-botoes-finais" class="bt-oculto">
+        <button class="bt-btn bt-btn-roxo" onclick="btGerarPDF()">📄 Salvar Resultado em PDF (A4)</button>
+        <button class="bt-btn bt-btn-vermelho" onclick="btReiniciar()">Novo Torneio (Apagar Tudo)</button>
+    </div>
+
+    <script>
+      let btTimes = [];
+      let btArtilheiros = [];
+
+      // Ao carregar a página, verifica se há dados salvos
+      window.onload = function() {
+        btCarregarDados();
+      };
+
+      function btShuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+
+      // Inicia um NOVO torneio (com sorteio)
+      function btIniciarNovo() {
+        const t1 = document.getElementById('bt-t1').value || "Time A";
+        const t2 = document.getElementById('bt-t2').value || "Time B";
+        const t3 = document.getElementById('bt-t3').value || "Time C";
+        const t4 = document.getElementById('bt-t4').value || "Time D";
+        
+        btTimes = btShuffle([t1, t2, t3, t4]);
+        btConstruirInterface();
+        btSalvarDados(); // Salva estado inicial
+      }
+
+      // Constrói a tela de jogos baseada na ordem do array btTimes
+      function btConstruirInterface() {
+        // Preenche select
+        const sel = document.getElementById('bt-select-time');
+        sel.innerHTML = '';
+        btTimes.forEach(t => { let o = document.createElement('option'); o.text = t; sel.add(o); });
+
+        // Gera Rodadas
+        const divContainer = document.getElementById('bt-lista-rodadas');
+        divContainer.innerHTML = '';
+
+        const criarHTML = (n, a, b, c, d) => {
+          const html = `
+          <div class="bt-rodada">
+            <h4>Rodada ${n}</h4>
+            <div class="bt-jogo">
+              <span class="bt-nome-time">${a}</span>
+              <div class="bt-placar-box">
+                  <input type="number" class="bt-placar-input" data-t="${a}" onchange="btSalvarDados()"> x 
+                  <input type="number" class="bt-placar-input" data-t="${b}" onchange="btSalvarDados()">
+              </div>
+              <span class="bt-nome-time">${b}</span>
+            </div>
+            <div class="bt-jogo">
+              <span class="bt-nome-time">${c}</span>
+              <div class="bt-placar-box">
+                  <input type="number" class="bt-placar-input" data-t="${c}" onchange="btSalvarDados()"> x 
+                  <input type="number" class="bt-placar-input" data-t="${d}" onchange="btSalvarDados()">
+              </div>
+              <span class="bt-nome-time">${d}</span>
+            </div>
+          </div>`;
+          const el = document.createElement('div'); el.innerHTML = html; divContainer.appendChild(el);
+        };
+        
+        criarHTML(1, btTimes[0], btTimes[3], btTimes[1], btTimes[2]);
+        criarHTML(2, btTimes[0], btTimes[2], btTimes[3], btTimes[1]);
+        criarHTML(3, btTimes[0], btTimes[1], btTimes[2], btTimes[3]);
+
+        // Mostra telas
+        document.getElementById('bt-setup').classList.add('bt-oculto');
+        document.getElementById('bt-jogos').classList.remove('bt-oculto');
+        document.getElementById('bt-classificacao').classList.remove('bt-oculto');
+        document.getElementById('bt-botoes-finais').classList.remove('bt-oculto');
+        
+        btAtualizar(false); // Atualiza tabela sem salvar de novo para evitar loop
+      }
+
+      function btAtualizar(salvar = true) {
+        let s = {}; btTimes.forEach(t => s[t] = {p:0,j:0,v:0,e:0,d:0,gp:0,gc:0,sg:0});
+        
+        document.querySelectorAll('.bt-jogo').forEach(j => {
+          let inps = j.querySelectorAll('input');
+          let v1 = inps[0].value, v2 = inps[1].value;
+          if(v1!=='' && v2!==''){
+             let g1=parseInt(v1), g2=parseInt(v2);
+             let t1=inps[0].getAttribute('data-t');
+             let t2=inps[1].getAttribute('data-t');
+             s[t1].j++; s[t2].j++; s[t1].gp+=g1; s[t1].gc+=g2; s[t2].gp+=g2; s[t2].gc+=g1;
+             s[t1].sg = s[t1].gp - s[t1].gc; s[t2].sg = s[t2].gp - s[t2].gc;
+             if(g1>g2){ s[t1].p+=3; s[t1].v++; s[t2].d++; }
+             else if(g2>g1){ s[t2].p+=3; s[t2].v++; s[t1].d++; }
+             else { s[t1].p++; s[t2].p++; s[t1].e++; s[t2].e++; }
+          }
+        });
+        
+        let rank = Object.keys(s).map(k => ({n:k, ...s[k], perc: s[k].j>0 ? ((s[k].p/(s[k].j*3))*100).toFixed(0):0 }));
+        rank.sort((a,b) => b.p-a.p || b.v-a.v || b.sg-a.sg || b.gp-a.gp);
+        
+        const tb = document.getElementById('bt-corpo-tabela'); tb.innerHTML = '';
+        rank.forEach(t => {
+          tb.innerHTML += `<tr><td>${t.n}</td><td style="background:#eee;font-weight:bold">${t.p}</td><td>${t.j}</td><td>${t.v}</td><td>${t.e}</td><td>${t.d}</td><td>${t.gp}</td><td>${t.gc}</td><td>${t.sg}</td><td>${t.perc}%</td></tr>`;
+        });
+
+        if(salvar) btSalvarDados();
+      }
+
+      // --- ARTILHARIA ---
+      function btAddArtilheiro() {
+         let n = document.getElementById('bt-nome-jogador').value;
+         let t = document.getElementById('bt-select-time').value;
+         let g = parseInt(document.getElementById('bt-gols-inicial').value);
+         if(n){ 
+           btArtilheiros.push({n,t,g}); 
+           document.getElementById('bt-nome-jogador').value=''; 
+           btRenderArt(); 
+           btSalvarDados();
+         }
+      }
+      function btMudaGol(i, d) { 
+        btArtilheiros[i].g += d; 
+        if(btArtilheiros[i].g<0) btArtilheiros[i].g=0; 
+        btRenderArt(); 
+        btSalvarDados();
+      }
+      function btRenderArt() {
+         btArtilheiros.sort((a,b)=>b.g-a.g);
+         const tb = document.getElementById('bt-lista-artilheiros'); tb.innerHTML='';
+         btArtilheiros.forEach((a,i) => {
+           tb.innerHTML += `<tr><td>${a.n}</td><td>${a.t}</td><td style="font-weight:bold">${a.g}</td><td class="bt-no-pdf"><button class="bt-btn-small bt-add" onclick="btMudaGol(${i},1)">+</button> <button class="bt-btn-small bt-rem" onclick="btMudaGol(${i},-1)">-</button></td></tr>`;
+         });
+      }
+
+      // --- SISTEMA DE SALVAMENTO (LOCALSTORAGE) ---
+      function btSalvarDados() {
+        // Coletar placares na ordem
+        let placares = [];
+        document.querySelectorAll('.bt-placar-input').forEach(inp => {
+          placares.push(inp.value);
+        });
+
+        const dados = {
+          ativo: true,
+          times: btTimes,
+          artilheiros: btArtilheiros,
+          placares: placares
+        };
+        
+        localStorage.setItem('ipuTorneioDataV2', JSON.stringify(dados));
+      }
+
+      function btCarregarDados() {
+        const salvos = localStorage.getItem('ipuTorneioDataV2');
+        if (salvos) {
+          const dados = JSON.parse(salvos);
+          if (dados.ativo) {
+            btTimes = dados.times;
+            btArtilheiros = dados.artilheiros;
+            
+            // Reconstrói a tela sem sortear de novo
+            btConstruirInterface();
+            
+            // Restaura os placares nos inputs
+            const inputs = document.querySelectorAll('.bt-placar-input');
+            if (dados.placares && dados.placares.length === inputs.length) {
+              inputs.forEach((inp, index) => {
+                inp.value = dados.placares[index];
+              });
+            }
+
+            // Atualiza tudo
+            btRenderArt();
+            btAtualizar(false);
+          }
+        }
+      }
+
+      // --- GERAR PDF ---
+      function btGerarPDF() {
+         btSalvarDados(); // Garante que salvou antes de gerar
+         const el = document.getElementById('blog-torneio-container');
+         const noPdf = el.querySelectorAll('.bt-no-pdf, #bt-botoes-finais, #bt-setup');
+         noPdf.forEach(x => x.style.display = 'none');
+
+         const inputs = el.querySelectorAll('input.bt-placar-input');
+         let replacements = [];
+
+         inputs.forEach(input => {
+            const span = document.createElement('span');
+            span.innerText = input.value === '' ? '-' : input.value;
+            span.className = 'bt-print-text';
+            input.parentNode.insertBefore(span, input);
+            input.style.display = 'none';
+            replacements.push({input: input, span: span});
+         });
+
+         const opt = {
+           margin: 5,
+           filename: 'Torneio-Ipu-Resultados.pdf',
+           image: { type: 'jpeg', quality: 0.98 },
+           html2canvas: { scale: 2 },
+           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+         };
+
+         html2pdf().set(opt).from(el).save().then(() => {
+            noPdf.forEach(x => x.style.display = '');
+            replacements.forEach(obj => {
+               obj.span.remove();
+               obj.input.style.display = '';
+            });
+         });
+      }
+
+      function btReiniciar() {
+         if(confirm("Tem certeza? Isso apagará todos os dados atuais.")) {
+           localStorage.removeItem('ipuTorneioDataV2');
+           location.reload();
+         }
+      }
+    </script>
+  </div>
+
+</div>
